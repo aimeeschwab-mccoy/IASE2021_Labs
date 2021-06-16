@@ -1,0 +1,170 @@
+---
+title: "Lab 4: Exploring Logistic Regression Models"
+subtitle: 'Your Name Here'
+author: 'MTH 362: Statistical Modeling'
+date: "Updated `r Sys.Date()`"
+output: 
+  html_document: 
+    toc: TRUE
+    toc_float: TRUE
+    theme: cosmo
+    code_download: TRUE
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+```{css, echo=FALSE}
+# This code chunk sets the "blockquotes" to use a blue font with a grey background
+# If you prefer a different colorscheme, feel free to modify
+
+blockquote {
+  background: #e7e7e7;
+  border-left: solid #0054a6;
+  color: #0054a6;
+}
+```
+
+
+The goal of this assignment is to: (1) explore how logistic regression models behave using __simulation__.
+
+Answer the questions below using blockquotes (insert ">" in front of your response). When you're finished:
+
+1. Change your name in the "author:" space at the top of this document.
+2. Click the "Knit" button at the top to create an HTML file with your answers. 
+3. Review your answers, make any changes as necessary, and re-"Knit".
+4. Save your HTML file and upload to BlueLine. 
+
+_You can also submit a Word or PDF copy of your work if you prefer (you'll need a LaTeX compiler to create a PDF.) If you go the Word/PDF route, please pay attention to page breaks in the compiled document, you may need to mess with the formatting options._
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(colorblindr)
+```
+
+## Simulation 1: Simple binomial regression
+
+The code below generates data according to a binomial regression model. Each of you has been randomly assigned a set of values for $\beta_0$ and $\beta_1$. Modify your code, and simulate the data.
+
+```{r}
+beta0 <- 1
+beta1 <- 0.5
+N <- 100
+n <- sample(5:15, replace=TRUE, size=N)
+
+x <- runif(min=0, max=5, n=N)
+
+# This command rounds the simulated value of x to two decimal places
+x <- round(x, 2)
+
+eta <- beta0 + beta1*x
+p <- exp(eta)/(1+exp(eta))
+
+y <- rbinom(size=n, prob=p, n=N)
+
+data <- tibble(x=x, y=y, n=n)
+head(data)
+
+data %>% ggplot(aes(x=x, y=y/n)) + geom_point()
+
+model <- glm(y/n ~ x, family='binomial')
+summary(model)
+```
+
+1. Make a scatterplot of your data. Describe the relationship between $x$ and $y$. Describe the relationship between $x$ and the sample proportion, $\hat{p}$.
+
+2. Fit and evaluate a simple linear regression model to predict the probability of success based on $x$.
+
+    a) Do the estimated parameters come close to your $\beta_0$ and $\beta_1$?
+    b) Comment on the fit of the model.
+
+3. Fit and evaluate a logistic regression model to predict the probability of success based on $x$.
+
+    a) Do the estimated parameters come close to your $\beta_0$ and $\beta_1$?
+    b) Comment on the fit of the model.
+
+4. What differences are present in the `summary()` output for `lm()` v. `glm()`?
+
+5. Calculate and interpret 95% confidence intervals for your model parameters using profile likelihood. Do your confidence intervals contain the "true" values of $\beta_0$ and $\beta_1$?
+
+6. Add your model parameters and the confidence intervals to the Google doc. How much do the parameters vary from sample to sample?
+
+7. Generate and examine residual plots for both the simple linear model and the logistic regression model. Based on your plots, what patterns would you expect to see in a "correctly specified" logistic regression model?
+
+---
+
+## Simulation 2: Model selection in binomial regression
+
+The code below generates data according to a logistic regression model. For simplicity, there are four explanatory variables, $X_1$ through $X_4$, each simulated according to a uniform distribution from 0 to 1. 
+
+```{r}
+beta0 <- 0
+beta1 <- 0.1
+beta2 <- 0.5
+beta3 <- 1
+beta4 <- -1
+N <- 100
+n <- sample(20:30, replace=TRUE, size=N)
+
+x1 <- round(runif(min=0, max=1, n=N), 2)
+x2 <- round(runif(min=0, max=1, n=N), 2)
+x3 <- round(runif(min=0, max=1, n=N), 2)
+x4 <- round(runif(min=0, max=1, n=N), 2)
+
+eta <- beta0 + beta1*x1 + beta2*x2 + beta3*x3 + beta4*x4
+p <- exp(eta)/(1+exp(eta))
+
+y <- rbinom(size=n, prob=p, n=N)
+
+data2 <- tibble(x1, x2, x3, x4, y, n)
+head(data2)
+```
+
+1. Which variable(s) do you think will be the strongest predictor(s) for $y$? Which variable(s) do you think will be the weakest predictor(s)? Explain your reasoning.
+
+2. Apply forward selection to this data - which variables are included in the chosen model?
+
+3. Save the forward selection model into a new model object. Calculate the variance inflation factor for each term in the model: what does this tell you?
+
+4. Are there any issues with using model selection techniques for logistic regression?
+
+---
+
+## Generalizing the assumptions
+
+So far, we've laid out explicit model assumptions in three cases: the normal model (multiple linear regression), the Poisson model (Poisson regression), and the binomial model (logistic regression). 
+
+Based on these sets of assumptions, what do you think a set of __generalized model assumptions__ would look like?
+
+__Linear regression assumptions__: 
+
+- There is a linear relationship between the mean response Y and the explanatory variable X
+- The errors are independent. In other words, there is no relationship between how far any two points fall from the regression line. This can be satisfied/violated through the experimental design.
+- The response variable is normally distributed at each level of X.
+- The error variance, or equivalently, the standard deviation of the responses is equal for all levels of X.
+
+__Poisson regression assumptions__: 
+
+- The response variable is a count per unit of time or space, described by a Poisson distribution.
+- The observations must be independent of one another.
+- The mean of a Poisson random variable must be equal to its variance.
+- The log of the mean rate, $\ln(\lambda)$, must be a linear function of X.
+
+__Binomial regression assumptions__:
+
+- The response variable must be either dichotomous (two possible responses) or the sum of dichotomous responses.
+- The observations must be independent of one another.
+- By definition, the variance of a binomial random variable is $np(1-p)$, so that variability must be highest when $p=0.5$.
+- The log of the odds ratio $ln(p/[1-p])$ must be a linear function of X.
+
+
+---
+
+## Constructive criticism welcome
+
+An excerpt from a letter to the editor about a methods paper recently came across my Twitter feed. (Original source withheld to prevent stats shaming.)
+
+![](assumptions.png)
+
+How would you respond?

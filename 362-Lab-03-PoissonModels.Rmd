@@ -1,0 +1,151 @@
+---
+title: "Lab 3: Exploring Poisson Regression Models"
+subtitle: 'Your Name Here'
+author: 'MTH 362: Statistical Modeling'
+date: "Updated `r Sys.Date()`"
+output: 
+  html_document: 
+    toc: TRUE
+    toc_float: TRUE
+    theme: cosmo
+    code_download: TRUE
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+```{css, echo=FALSE}
+# This code chunk sets the "blockquotes" to use a blue font with a grey background
+# If you prefer a different colorscheme, feel free to modify
+
+blockquote {
+  background: #e7e7e7;
+  border-left: solid #0054a6;
+  color: #0054a6;
+}
+```
+
+
+The goal of this assignment is to: (1) explore how Poisson regression models behave using __simulation__.
+
+Answer the questions below using blockquotes (insert ">" in front of your response). When you're finished:
+
+1. Change your name in the "author:" space at the top of this document.
+2. Click the "Knit" button at the top to create an HTML file with your answers. 
+3. Review your answers, make any changes as necessary, and re-"Knit".
+4. Save your HTML file and upload to BlueLine. 
+
+_You can also submit a Word or PDF copy of your work if you prefer (you'll need a LaTeX compiler to create a PDF.) If you go the Word/PDF route, please pay attention to page breaks in the compiled document, you may need to mess with the formatting options._
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+```
+
+A commonly used tool in statistics to learn more about the performance of a model is a __simulation study__. We use probability models to _simulate_ data that follows a pre-specified model. Then, we fit the model or technique we want to evaluate to the simulated data, and see how well it estimates the underlying parameters. The advantage of using a simulation study compared to testing a model on real data is that for real data, we don't know what the true parameters may be. But, if we simulate the data, we know what values were used to generate it.
+
+## Simulation 1: Simple Poisson Regression
+
+The code below generates data according to a Poisson regression model. Each of you has been randomly assigned a set of values for $\beta_0$ and $\beta_1$. Modify your code, and simulate the data.
+
+```{r}
+beta0 <- 1
+beta1 <- -5
+n <- 100
+
+x <- runif(min=0, max=5, n=n)
+
+# This command rounds the simulated value of x to two decimal places
+x <- round(x, 2)
+
+eta <- beta0 + beta1*x
+lambda <- exp(eta)
+
+y <- rpois(lambda, n=n)
+
+data <- tibble(x, y)
+
+model <- glm(y ~ x, family='quasipoisson', data=data)
+summary(model)
+
+data %>% ggplot(aes(x=y)) +
+  geom_histogram()
+```
+
+1. Make a scatterplot of your data. Describe the relationship between $x$ and $y$.
+
+2. Fit and evaluate a simple linear regression model to predict $y$ based on $x$.
+
+    a) Do the estimated parameters come close to your $\beta_0$ and $\beta_1$?
+    b) Comment on the fit of the model.
+
+3. Fit and evaluate a Poisson regression model to predict $y$ based on $x$.
+
+    a) Do the estimated parameters come close to your $\beta_0$ and $\beta_1$?
+    b) Comment on the fit of the model.
+
+4. What differences are present in the `summary()` output for `lm()` v. `glm()`?
+
+5. Calculate and interpret 95% confidence intervals for your model parameters using profile likelihood. Do your confidence intervals contain the "true" values of $\beta_0$ and $\beta_1$?
+
+6. Fit a quasipoisson model. Verify that the parameters estimates ($\beta_0$ and $\beta_1$) are the same. When there is no overdispersion, what value do you expect for the overdispersion parameter, $\phi$?
+
+6. Add your model parameters and the confidence intervals to the Google doc. How much do the parameters vary from sample to sample?
+
+7. Generate and examine residual plots for both the simple linear model and the Poisson regression model. Based on your plots, what patterns would you expect to see in a "correctly specified" Poisson regression model?
+
+---
+
+## Simulation 2: Adding zero-inflation
+
+The code below generates data according to a zero-inflated Poisson regression model. Each of you has been randomly assigned a set of values for $\beta_0$, $\beta_1$, and $\alpha$. Modify your code, and simulate the data. Observed a "fixed" zero is more likely for small values of $x$.
+
+```{r}
+beta0 <- 1
+beta1 <- -5
+alpha <- 0.1
+n <- 100
+
+x <- runif(min=0, max=5, n=n)
+
+# This command rounds the simulated value of x to two decimal places
+x <- round(x, 2)
+
+eta <- beta0 + beta1*x
+lambda <- exp(eta)
+
+# rbinom will generate random 0s or 1s, with probability alpha
+y <- rbinom(n, size=1, prob=alpha)*rpois(lambda, n=n)
+
+data <- tibble(x, y)
+```
+
+1. Make a scatterplot of your data. Describe the relationship between $x$ and $y$.
+
+2. Fit and evaluate a Poisson regression model to predict $y$ based on $x$.
+
+    a) Do the estimated parameters come close to your $\beta_0$ and $\beta_1$?
+    b) Comment on the fit of the model.
+
+3. Calculate and interpret 95% confidence intervals for your model parameters using profile likelihood. Do your confidence intervals contain the "true" values of $\beta_0$ and $\beta_1$?
+
+4. Add your model parameters and the confidence intervals to the Google doc. How much do the parameters vary from sample to sample?
+
+5. Generate and examine residual plots for both the simple linear model and the Poisson regression model. Based on your plots, what patterns would you expect to see in a "correctly specified" Poisson regression model?
+
+6. Fit a zero-inflated Poisson model to this data. 
+
+    a) Do the estimated parameters come close to your $\beta_0$, $\beta_1$, and $\alpha$?
+    b) Comment on the fit of the model.
+
+```{r}
+library(pscl)
+# We don't have an explanatory variable for the probability of an extra 0, so 
+# instead use a 1 to denote an "intercept only" model
+model <- zeroinfl(y ~ x | 1, data=data)
+summary(model)
+```
+
+7. Fit a quasipoisson model. Verify that the parameters estimates ($\beta_0$ and $\beta_1$) are the same. When there is overdispersion, what value do you expect for the overdispersion parameter, $\phi$?
+
+8. Add your model parameters and the confidence intervals to the Google doc. How much do the parameters vary from sample to sample?

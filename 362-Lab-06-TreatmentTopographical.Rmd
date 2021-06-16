@@ -1,0 +1,155 @@
+---
+title: "Lab 6: Don't _Mix_ Up Your Fixed Effects and Random Effects"
+subtitle: 'Your Name Here'
+author: 'MTH 362: Statistical Modeling'
+date: "Updated `r Sys.Date()`"
+output: 
+  pdf_document
+header-includes:
+- |
+  ```{=latex}
+  \usepackage[default]{sourcesanspro}
+  \usepackage[T1]{fontenc}
+  ```
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+
+Arguably, the hardest part of _mixed modeling_ is figuring out the notation. One useful tool is to think of the experiment (or data generating process) in terms of the __topographical__ parts and the __treatment__ parts.
+
+
+## Treatment v. topographical 
+
+"Topographical" refers to the _non-treatment_ aspects of the design.
+
+__Example__: Consider a study where three batches will be selected for use in an experiment. For each batch, measurements $Y$ are taken after applying some explanatory variable, $X$,  which we'll consider categorical with nine levels: 0, 3, 6, 9, 12, 18, 24, 36, and 48.
+
+!["Plot plan" of the batch example.](batches.png)
+
+
+
+To sketch the ANOVA table for a model, we need to know how many _degrees of freedom_ to allocate to each variable. Think of the degrees of freedom as the number of parameters needed to fit the model using that particular variable.
+
+1. Numerical variables get allocated:
+
+\vfill
+
+2. Categorical variables get allocated:
+
+\vfill
+
+The total degrees of freedom available are:
+
+\vfill
+
+\pagebreak
+
+!["Plot plan" of the batch example.](batches.png)
+
+__Example__: For the batch experiment...
+
+Topographical features:
+
+\vfill
+
+Treatment features:
+
+\vfill
+
+Combined ANOVA table:
+
+\vfill
+
+
+How does the ANOVA table change if $X$ is numerical?
+
+\vfill
+
+\vfill
+
+
+\pagebreak
+
+---
+
+Sketching the ANOVA table before fitting a mixed model helps us:
+
+1. Determine whether the model can actually be fit given the data available (Sometimes we don't have enough data to estimate model effects for all explanatory variables!).
+2. Check that the model being fit by R is the model we actually wanted.
+
+
+__Instructions__: Consider the following six scenarios. Each one describes a study - how it was conducted, the response variable of interest, and the objective of the study. For each scenario:
+
+1. Sketch the "plot plan". 
+2. Identify the response variable, and a reasonable distribution for modeling the response variable.
+3. Identify the fixed effect(s).
+4. Identify the random effect(s).
+5. Identify any nested effect(s): effects that only occur with certain combinations of other effects (i.e. teachers are unique within schools).
+6. Write the full model specification (linear predictor, link, response distribution).
+7. Sketch the _ANOVA table_. 
+8. Write the _functional form_ of the model in R.
+
+__Hints__:
+
+- Think about whether each explanatory variable is numerical or categorical.
+- Think about whether any interaction terms are necessary.
+- Think about how much data you have. If there aren't enough degrees of freedom to add a term to a model, then we simply can't add it (no matter how much we might want to!).
+
+\vfill
+
+Some common random effect terms in R notation:
+
+Formula term|Interpretation
+----------|---------------
+`(1|group)`|Random intercept based on groups - use this to add a "bump" from membership in a group or block
+`(x|group) = (1+x|group)`|Random slope of `x` within group with a correlated intercept - intercept and slope may vary by block
+`(0+x|group) = (-1+x|group)`|Random slope of `x` within group, no variation in intercept - only slope varies by block
+`(1|group) + (0+x|group)`|Uncorrelated random intercept and random slope of `x` within group - intercept and slope vary  by block _without_ correlation
+`(1|site:block)`|Intercept varying among sites nested within block (nested random effect)
+`(1|site/block) = (1|site) + (1|site:block)`|Intercept varying among sites and among blocks within sites (nested random effect)
+`(x1|site) + (x2|block)`|Slope of `x1` varies within site and slope of `x2` varies within blocks
+
+- Source: "An R Companion to Generalized Linear Mixed Modeling: Modern Concepts, Methods and Applications"
+- Adapted from Robin Jeffries and Ben Bolker
+
+\pagebreak
+
+## Scenario A
+
+Ten clinics are randomly sampled from a population. At each clinic, volunteers are randomly assigned into two groups. At each clinic, volunteers are randomly assigned into two groups. One group receives treatment 1, and the other group receives treatment 2. Let $N_{ij}$ be the number of patients receiving the $i^{th}$ treatment at the $j^{th}$ clinic. The response variable is $Y_{ij}$, the number of patients showing a favorable outcome to the treatment.
+
+\pagebreak
+
+## Scenario B
+
+Seven locations are sampled. Each location is divided into four parts. Each part is randomly assigned a "level of exposure" to an environmental hazard (the levels are 0, 0.5X, X, and 2X), where X is the "nominal maximum safe level of exposure"). The response variable is the number of living organisms of a species affected by the hazard. The theory to be tested is that the number of organisms decreases linearly as the level of exposure increases.
+
+\pagebreak
+
+## Scenario C
+
+The country of Statsylvania has three distinct soil types. One location of each soil type is selected. Each location is split into 10 parts, called "plots". Five are randomly assigned to treatment 1, the other five to treatment 2. Corn is grown on each plot: the response of interest is the corn yield suitable for ethanol production: a total yield measurement is obtained for each plot. The objective is to estimate the affect of soil type and treatment on yield.
+
+\pagebreak
+
+## Scenario D
+
+A court wants to determine if there is evidence of racial discrimination in the state's sentencing practices for murder convictions. Records for a period the court deems relevant are assembled and reviewed for race of the victim (white v. non-white), race of the convict (white v. non-white), and sentence type (death penalty v. no death penalty).
+
+\pagebreak
+
+## Scenario E
+
+Eighteen counties are randomly selected from a population of "typical" counties in america. Two types of vaccines will be compared for their effectiveness against the flu. Nine counties are assigned to vaccine type A, and nine are assigned to vaccine type B. In each county, the patients are randomly assigned to three groups. The first group receives the assigned vaccine at a low dose, the second group receives the vaccine at a medium dose, and the third group receives the assigned vaccine at a high dose. Let $N_{ijk}$ represent the number of patients in county $k$ receiving the $j^{th}$ dose level (low, medium, or high) of the $i^{th}$ vaccine type (A or B). Let $Y_{ijk}$ be the number of patients in the ${ijk}^{th}$ group who contract the flu. The goal of the study is to assess the effect of vaccine type and dose level on the effectiveness of protection.
+
+\pagebreak
+
+## Scenario F
+
+Twelve schools are sampled, one per county, from the same population in Scenario D. Six schools participate in a professional development program for math teachers; six do not (schools are randomly assigned to the development or no-development group). Students in the schools' math courses are given math proficiency tests at four times during the school year (at the beginning, after the first term, after the second term, and at the end of the school year). The objective is to see if the professional development program improved student learning in math.
+
+\pagebreak

@@ -1,0 +1,156 @@
+---
+title: "Lab 1: Interaction Terms"
+author: 'MTH 362: Statistical Modeling'
+date: "Updated `r Sys.Date()`"
+output: 
+  html_document: 
+    toc: TRUE
+    toc_float: TRUE
+    theme: cosmo
+    code_download: TRUE
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+The goal of this assignment is to: (1) explore how to incorporate categorical variables into linear regression through **interaction terms**, and (2) get you acquainted with working in the RStudio/RMarkdown/`tidyverse` ecosystem.
+
+Answer the questions below in the spaces provided (leave the "\>" sign in place). When you're finished:
+
+1.  Change your name in the "author:" space at the top of this document.
+2.  Click the "Knit" button at the top to create an HTML file with your answers.
+3.  Review your answers, make any changes as necessary, and re-"Knit".
+4.  Save your HTML file and upload to BlueLine.
+
+*You can also submit a Word or PDF copy of your work if you prefer (you'll need a LaTeX compiler to create a PDF.) If you go the Word/PDF route, please pay attention to page breaks in the compiled document, you may need to mess with the formatting options.*
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+```
+
+When we introduced the `penguins` data set in class, we saw that a linear regression model worked well to describe the relationship between bill length and flipper length for three species of penguins.
+
+```{r}
+library(palmerpenguins)
+data(penguins)
+penguins %>%
+  ggplot(aes(x=bill_length_mm, 
+             y=flipper_length_mm)) + 
+  geom_point() + 
+  geom_smooth(method='lm',
+              se=FALSE) +
+  labs(x='Bill length (mm)', 
+       y='Flipper length (mm)', 
+       title='Palmer penguins')
+```
+
+Does the "best" linear model depend on which penguin species?
+
+```{r}
+penguins %>%
+  ggplot(aes(x=bill_length_mm, 
+             y=flipper_length_mm)) + 
+  geom_point(aes(col=species, pch=species)) + 
+  geom_smooth(method='lm',
+              se=FALSE) +
+  labs(x='Bill length (mm)', 
+       y='Flipper length (mm)', 
+       title='Palmer penguins')
+```
+
+------------------------------------------------------------------------
+
+There are two options we could pursue:
+
+1.  Fit a linear regression model on each species separately.
+2.  Use an **interaction term** to add species to a multiple linear regression model.
+
+**Interaction**: An interaction occurs when an explanatory variable has a different effect on the outcome depending on the values of another explanatory variable.
+
+## Question 1
+
+Does the value of the explanatory variable `bill_length_mm` change depending on the `species`? Use a boxplot to support your answer.
+
+> Write your response here.
+
+```{r}
+penguins %>% 
+  ggplot(aes(x=species, y=bill_length_mm)) + 
+  geom_boxplot(aes(fill=species)) + 
+  guides(fill=FALSE) + 
+  labs(x='Species', y='Petal Width')
+```
+
+You might have previously encountered interaction terms in ANOVA models, but we can use them in any linear model. The linear model with interaction looks something like this:
+
+$$Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \beta_{12}(X_1 \times X_2) + \epsilon$$
+
+In R, we specify an interaction term with an asterisk (`*`).
+
+## Question 2
+
+The code below fits the linear regression model with an additional interaction term for `species`.
+
+a)  Based on the output, write the linear model with the necessary dummy variables.
+
+> Write your response here.
+
+b)  Which terms in the model are "statistically significant"?
+
+> Write your response here.
+
+c)  Evaluate the model assumptions.
+
+> Write your response here.
+
+```{r}
+model_int <- lm(flipper_length_mm ~ bill_length_mm*species, data=penguins)
+summary(model_int)
+
+par(mfrow=c(2, 2))
+plot(model_int)
+```
+
+Interpreting this model is a challenge! Remember, R uses reference values to code categorical variables.
+
+## Question 3
+
+For the Chinstrap penguin, the fitted linear model is:
+
+$$\hat{Y}_{Chinstrap}=(158.9244 - 12.2886) + (0.7999+0.2073)X$$
+
+a)  Create a new data set that contains only the Chinstrap penguins, and verify this result.
+
+> Write your response here.
+
+```{r, eval=FALSE}
+# Fill in the blank, then remove the eval=FALSE option
+chinstrap <- penguins %>% filter(species == _____)
+model_chinstrap <- lm(flipper_length_mm ~ bill_length_mm, data=chinstrap)
+summary(model_chinstrap)
+```
+
+b)  For the Adelie penguin, the fitted linear model is:
+
+$$\hat{Y}_{Adelie} = 158.9244 + 0.799X$$
+
+Where did these numbers come from? (Hint: Use the `summary(model_int)` output.)
+
+> Write your response here.
+
+c)  Create a new data set that contains only the Adelie penguins, and verify this result.
+
+> Write your response here.
+
+d)  Write the fitted linear model for the Gentoo penguins. Where do the numbers come from?
+
+> Write your response here.
+
+e)  Create a new data set that contains only the Gentoo penguins, and verify this result.
+
+> Write your response here.
+
+f)  What do the p-values for the interaction term represent? That is, what hypotheses are being tested?
+
+> Write your response here.
